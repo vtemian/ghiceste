@@ -9,9 +9,15 @@ const app = new Hono<{ Bindings: Env }>();
 
 app.use('/*', cors());
 
+// Routes with /api prefix (for local dev and direct access)
 app.route('/api', token);
 app.route('/api', game);
 app.route('/api/leaderboard', leaderboard);
+
+// Routes without /api prefix (Discord strips the prefix when proxying)
+app.route('/', token);
+app.route('/', game);
+app.route('/leaderboard', leaderboard);
 
 app.get('/health', (c) => c.json({ status: 'ok' }));
 

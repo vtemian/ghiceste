@@ -30,7 +30,21 @@ export async function initializeDiscord(): Promise<{
     body: JSON.stringify({ code }),
   });
 
-  const { access_token } = await response.json();
+  const text = await response.text();
+  console.log('Token response:', text);
+
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch (e) {
+    throw new Error(`Failed to parse token response: ${text.substring(0, 100)}`);
+  }
+
+  if (data.error) {
+    throw new Error(`Token error: ${data.error}`);
+  }
+
+  const { access_token } = data;
 
   const auth = await discordSdk.commands.authenticate({ access_token });
 

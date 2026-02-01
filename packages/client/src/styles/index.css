@@ -215,16 +215,37 @@ body {
   z-index: 100;
 }
 
-.game-over-message {
+.game-over {
   text-align: center;
-  padding: 1rem;
-  font-size: 1.25rem;
+  padding: 1.5rem;
+  margin: 1rem 0;
+  background: #1a1a1b;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 350px;
 }
 
-.game-over-message.won {
+.game-over-title {
+  font-size: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.game-over-title.win {
   color: var(--color-correct);
 }
 
-.game-over-message.lost {
+.game-over-title.lose {
   color: #ff6b6b;
+}
+
+.game-over p {
+  margin: 0.25rem 0;
+}
+
+.revealed-word {
+  font-size: 2rem;
+  font-weight: bold;
+  letter-spacing: 0.3rem;
+  color: var(--color-present);
+  margin-top: 0.5rem !important;
 }

@@ -19,6 +19,13 @@ game.get('/word/:instanceId', (c) => {
   return c.json({ wordIndex: index, totalWords: words.answers.length });
 });
 
+game.get('/reveal/:instanceId', (c) => {
+  const instanceId = c.req.param('instanceId');
+  const index = Math.floor(seededRandom(instanceId) * words.answers.length);
+  const word = words.answers[index];
+  return c.json({ word });
+});
+
 game.post('/validate', async (c) => {
   const { guess, instanceId } = await c.req.json<{
     guess: string;

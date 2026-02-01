@@ -19,7 +19,13 @@ token.post('/token', async (c) => {
     }),
   });
 
-  const data = await response.json() as { access_token: string };
+  const data = await response.json() as { access_token?: string; error?: string };
+
+  if (!response.ok || data.error) {
+    console.error('Token exchange failed:', data);
+    return c.json({ error: data.error || 'Token exchange failed' }, 400);
+  }
+
   return c.json({ access_token: data.access_token });
 });
 

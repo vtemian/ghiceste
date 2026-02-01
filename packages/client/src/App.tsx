@@ -3,6 +3,7 @@ import { useGame } from './hooks/useGame';
 import { Grid } from './components/Grid';
 import { Keyboard } from './components/Keyboard';
 import { Leaderboard } from './components/Leaderboard';
+import { GameOver } from './components/GameOver';
 import './styles/index.css';
 
 interface DiscordUser {
@@ -132,7 +133,10 @@ function Game({ user }: { user: DiscordUser }) {
       />
       <Keyboard onKey={handleKey} letterStates={keyboardState()} />
       {state.gameOver && (
-        <Leaderboard instanceId={user.instanceId} currentUserId={user.userId} />
+        <>
+          <GameOver won={state.won} guesses={state.guesses.length} instanceId={user.instanceId} />
+          <Leaderboard instanceId={user.instanceId} currentUserId={user.userId} />
+        </>
       )}
     </>
   );
