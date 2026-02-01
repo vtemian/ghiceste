@@ -2,6 +2,8 @@
 
 A Romanian Wordle clone built as a Discord Activity.
 
+<img width="725" height="749" alt="Screenshot 2026-02-01 at 9 14 23 PM" src="https://github.com/user-attachments/assets/d8b914b7-3d1c-4035-a40d-0cd722a06675" />
+
 ## Features
 
 - 5-letter Romanian words (no diacritics)
