@@ -52,6 +52,8 @@ export function useGame(instanceId: string) {
     const newResults = [...state.results, data.result];
     const won = data.correct;
     const gameOver = won || newGuesses.length >= 6;
+    const endTime = gameOver ? Date.now() : null;
+    const timeMs = endTime ? endTime - state.startTime : 0;
 
     setState((s) => ({
       ...s,
@@ -60,10 +62,10 @@ export function useGame(instanceId: string) {
       currentGuess: '',
       gameOver,
       won,
-      endTime: gameOver ? Date.now() : null,
+      endTime,
     }));
 
-    return { gameOver, won, guesses: newGuesses.length };
+    return { gameOver, won, guesses: newGuesses.length, timeMs };
   }, [state, instanceId]);
 
   const keyboardState = useCallback((): Record<string, LetterState> => {

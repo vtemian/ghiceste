@@ -5,9 +5,6 @@ compatibility_date = "2024-01-01"
 [vars]
 ENVIRONMENT = "development"
 
-# KV namespace for leaderboards
-# Create with: wrangler kv:namespace create LEADERBOARDS
-# Then uncomment and add the ID:
-# [[kv_namespaces]]
-# binding = "LEADERBOARDS"
-# id = "<your-namespace-id>"
+[[kv_namespaces]]
+binding = "LEADERBOARDS"
+id = "dfd5c9f0c99447cc9d87d60ad8c98268"

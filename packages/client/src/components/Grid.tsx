@@ -47,5 +47,7 @@ interface CellProps {
 }
 
 function Cell({ letter, state }: CellProps) {
-  return <div className={`cell cell-${state}`}>{letter.trim()}</div>;
+  const hasLetter = letter.trim() !== '';
+  const classes = `cell cell-${state}${hasLetter && state === 'empty' ? ' cell-filled' : ''}`;
+  return <div className={classes}>{letter.trim()}</div>;
 }

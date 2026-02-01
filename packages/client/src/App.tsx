@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback } from 'react';
-import { initializeDiscord } from './lib/discord';
 import { useGame } from './hooks/useGame';
 import { Grid } from './components/Grid';
 import { Keyboard } from './components/Keyboard';
@@ -12,22 +11,46 @@ interface DiscordUser {
   username: string;
 }
 
+// Check if running inside Discord iframe
+function isInDiscord(): boolean {
+  const params = new URLSearchParams(window.location.search);
+  return params.has('frame_id');
+}
+
+// Mock user for local development
+function getMockUser(): DiscordUser {
+  return {
+    instanceId: 'local-dev-session',
+    userId: 'local-user-123',
+    username: 'LocalDev',
+  };
+}
+
 export default function App() {
   const [user, setUser] = useState<DiscordUser | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    initializeDiscord()
-      .then((data) => {
-        setUser({
-          instanceId: data.instanceId,
-          userId: data.userId,
-          username: data.username,
-        });
-      })
-      .catch((err) => {
-        setError(err.message);
+    if (isInDiscord()) {
+      // Running in Discord - use real SDK
+      import('./lib/discord').then(({ initializeDiscord }) => {
+        initializeDiscord()
+          .then((data) => {
+            setUser({
+              instanceId: data.instanceId,
+              userId: data.userId,
+              username: data.username,
+            });
+          })
+          .catch((err) => {
+            setError(err.message);
+          });
       });
+    } else {
+      // Local dev mode - use mock user
+      console.log('Running in local dev mode (not in Discord)');
+      setUser(getMockUser());
+    }
   }, []);
 
   if (error) {
@@ -70,7 +93,7 @@ function Game({ user }: { user: DiscordUser }) {
               userId: user.userId,
               username: user.username,
               guesses: result.guesses,
-              timeMs: state.endTime! - state.startTime,
+              timeMs: result.timeMs,
             }),
           });
           setSubmitted(true);
