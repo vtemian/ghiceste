@@ -1,0 +1,12 @@
+{
+  "name": "ghiceste",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm -r build",
+    "tunnel": "cloudflared tunnel --url http://localhost:5173"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0"
+  }
+}

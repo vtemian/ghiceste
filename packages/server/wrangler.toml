@@ -1,0 +1,13 @@
+name = "ghiceste-server"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+[vars]
+ENVIRONMENT = "development"
+
+# KV namespace for leaderboards
+# Create with: wrangler kv:namespace create LEADERBOARDS
+# Then uncomment and add the ID:
+# [[kv_namespaces]]
+# binding = "LEADERBOARDS"
+# id = "<your-namespace-id>"
