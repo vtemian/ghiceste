@@ -15,19 +15,31 @@ leaderboard.post('/submit', async (c) => {
   const key = `session:${instanceId}`;
   const existing = await c.env.LEADERBOARDS.get(key, 'json') as LeaderboardEntry[] | null;
   const entries = existing ?? [];
-
+  
   const existingIndex = entries.findIndex((e) => e.userId === userId);
-  if (existingIndex !== -1) {
-    return c.json({ error: 'Already submitted' }, 400);
-  }
-
-  entries.push({
+  const newEntry = {
     userId,
     username,
     guesses,
     timeMs,
     timestamp: Date.now(),
-  });
+  };
+  
+  if (existingIndex !== -1) {
+    // User already exists - update only if better score
+    const existingEntry = entries[existingIndex];
+    const existingBetter = 
+      existingEntry.guesses < guesses ||
+      (existingEntry.guesses === guesses && existingEntry.timeMs < timeMs);
+    
+    if (!existingBetter) {
+      // Update with better score
+      entries[existingIndex] = newEntry;
+    }
+  } else {
+    // New entry - add to leaderboard
+    entries.push(newEntry);
+  }
 
   entries.sort((a, b) => {
     if (a.guesses !== b.guesses) return a.guesses - b.guesses;

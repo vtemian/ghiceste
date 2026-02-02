@@ -1,0 +1,33 @@
+.leaderboard-page {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.leaderboard-page .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.leaderboard-page main {
+  width: 100%;
+  max-width: 500px;
+  padding: 1rem;
+}
+
+.back-button {
+  font-size: 1rem;
+  font-weight: normal;
+  color: var(--color-text);
+  text-decoration: none;
+  background: var(--color-key);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+}
+
+.back-button:hover {
+  opacity: 0.9;
+}

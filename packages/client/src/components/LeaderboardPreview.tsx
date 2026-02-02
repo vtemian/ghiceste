@@ -7,12 +7,12 @@ interface LeaderboardEntry {
   timeMs: number;
 }
 
-interface LeaderboardProps {
+interface LeaderboardPreviewProps {
   instanceId: string;
   currentUserId: string;
 }
 
-export function Leaderboard({ instanceId, currentUserId }: LeaderboardProps) {
+export function LeaderboardPreview({ instanceId, currentUserId }: LeaderboardPreviewProps) {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -22,26 +22,28 @@ export function Leaderboard({ instanceId, currentUserId }: LeaderboardProps) {
       .then((data) => {
         setEntries(data.entries);
         setLoading(false);
-      });
+      })
+      .catch(() => setLoading(false));
 
     const interval = setInterval(() => {
       fetch(`/api/leaderboard/${instanceId}`)
         .then((res) => res.json())
-        .then((data) => setEntries(data.entries));
+        .then((data) => setEntries(data.entries))
+        .catch(() => {});
     }, 5000);
 
     return () => clearInterval(interval);
   }, [instanceId]);
 
-  if (loading) return <div className="leaderboard">Se încarcă...</div>;
-
   return (
-    <div className="leaderboard">
+    <div className="leaderboard-preview">
       <h2>Clasament</h2>
-      {entries.length === 0 ? (
+      {loading ? (
+        <p>Se încarcă...</p>
+      ) : entries.length === 0 ? (
         <p>Fii primul care termină!</p>
       ) : (
-        entries.slice(0, 10).map((entry, i) => (
+        entries.slice(0, 5).map((entry, i) => (
           <div
             key={entry.userId}
             className={`leaderboard-entry ${entry.userId === currentUserId ? 'current-user' : ''}`}

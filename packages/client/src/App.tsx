@@ -1,9 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import { useGame } from './hooks/useGame';
 import { Grid } from './components/Grid';
 import { Keyboard } from './components/Keyboard';
-import { Leaderboard } from './components/Leaderboard';
 import { GameOver } from './components/GameOver';
+import { LeaderboardPage } from './pages/LeaderboardPage';
 import './styles/index.css';
 
 interface DiscordUser {
@@ -62,13 +63,22 @@ export default function App() {
     return <div className="loading">Se încarcă...</div>;
   }
 
-  return <Game user={user} />;
+  return (
+    <Routes>
+      <Route path="/" element={<GamePage user={user} />} />
+      <Route path="/leaderboard" element={<LeaderboardPage />} />
+    </Routes>
+  );
 }
 
-function Game({ user }: { user: DiscordUser }) {
-  const { state, addLetter, removeLetter, submitGuess, keyboardState } = useGame(user.instanceId);
+import { LeaderboardPreview } from './components/LeaderboardPreview';
+import './components/LeaderboardPreview.css';
+
+function GamePage({ user }: { user: DiscordUser }) {
+  const { state, addLetter, removeLetter, submitGuess, keyboardState, resetGame } = useGame(user.instanceId);
   const [submitted, setSubmitted] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [showGameOver, setShowGameOver] = useState(false);
 
   const showToast = (message: string) => {
     setToast(message);
@@ -76,6 +86,8 @@ function Game({ user }: { user: DiscordUser }) {
   };
 
   const handleKey = useCallback((key: string) => {
+    if (state.gameOver) return;
+
     if (key === 'enter') {
       submitGuess().then((result) => {
         if (!result) return;
@@ -85,19 +97,22 @@ function Game({ user }: { user: DiscordUser }) {
           return;
         }
 
-        if (result.gameOver && result.won && !submitted) {
-          fetch('/api/leaderboard/submit', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              instanceId: user.instanceId,
-              userId: user.userId,
-              username: user.username,
-              guesses: result.guesses,
-              timeMs: result.timeMs,
-            }),
-          });
-          setSubmitted(true);
+        if (result.gameOver) {
+          setShowGameOver(true);
+          if (result.won && !submitted) {
+            fetch('/api/leaderboard/submit', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                instanceId: user.instanceId,
+                userId: user.userId,
+                username: user.username,
+                guesses: result.guesses,
+                timeMs: result.timeMs,
+              }),
+            });
+            setSubmitted(true);
+          }
         }
       });
     } else if (key === 'backspace') {
@@ -122,22 +137,34 @@ function Game({ user }: { user: DiscordUser }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKey]);
 
+  const handlePlayAgain = () => {
+    resetGame();
+    setShowGameOver(false);
+    setSubmitted(false);
+  };
+
   return (
-    <>
-      <header className="header">GHICEȘTE</header>
-      {toast && <div className="toast">{toast}</div>}
-      <Grid
-        guesses={state.guesses}
-        results={state.results}
-        currentGuess={state.currentGuess}
-      />
-      <Keyboard onKey={handleKey} letterStates={keyboardState()} />
-      {state.gameOver && (
-        <>
-          <GameOver won={state.won} guesses={state.guesses.length} instanceId={user.instanceId} />
-          <Leaderboard instanceId={user.instanceId} currentUserId={user.userId} />
-        </>
-      )}
-    </>
+    <div className="game-layout">
+      <div className="game-container">
+        <header className="header">GHICEȘTE</header>
+        {toast && <div className="toast">{toast}</div>}
+        <Grid
+          guesses={state.guesses}
+          results={state.results}
+          currentGuess={state.currentGuess}
+        />
+        <Keyboard onKey={handleKey} letterStates={keyboardState()} />
+        {showGameOver && (
+          <GameOver
+            won={state.won}
+            guesses={state.guesses.length}
+            instanceId={user.instanceId}
+            onPlayAgain={handlePlayAgain}
+            onClose={() => setShowGameOver(false)}
+          />
+        )}
+      </div>
+      <LeaderboardPreview instanceId={user.instanceId} currentUserId={user.userId} />
+    </div>
   );
 }

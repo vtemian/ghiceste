@@ -23,6 +23,18 @@ export function useGame(instanceId: string) {
     endTime: null,
   });
 
+  const resetGame = useCallback(() => {
+    setState({
+      guesses: [],
+      results: [],
+      currentGuess: '',
+      gameOver: false,
+      won: false,
+      startTime: Date.now(),
+      endTime: null,
+    });
+  }, []);
+
   const addLetter = useCallback((letter: string) => {
     if (state.gameOver || state.currentGuess.length >= 5) return;
     setState((s) => ({ ...s, currentGuess: s.currentGuess + letter.toLowerCase() }));
@@ -90,5 +102,6 @@ export function useGame(instanceId: string) {
     removeLetter,
     submitGuess,
     keyboardState,
+    resetGame,
   };
 }
