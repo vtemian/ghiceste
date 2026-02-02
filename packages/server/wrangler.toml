@@ -9,3 +9,10 @@ VITE_DISCORD_CLIENT_ID = "1467525387503403039"
 [[kv_namespaces]]
 binding = "LEADERBOARDS"
 id = "dfd5c9f0c99447cc9d87d60ad8c98268"
+
+# To create the new namespace for achievements, run:
+# npx wrangler kv:namespace create ACHIEVEMENTS
+# Then, replace the placeholder ID below with the one provided.
+[[kv_namespaces]]
+binding = "ACHIEVEMENTS"
+id = "replace-with-your-achievements-namespace-id"

@@ -53,9 +53,9 @@ export function LeaderboardPage() {
   return (
     <div className="leaderboard-page">
       <header className="header">
-        <Link to="/" className="back-button">Înapoi la joc</Link>
+        <Link to="/" className="back-button">Joc</Link>
         <h1>Clasament</h1>
-        <div style={{ width: '80px' }}></div>
+        <Link to="/achievements" className="back-button">Realizări</Link>
       </header>
       <main className="leaderboard">
         {loading ? (

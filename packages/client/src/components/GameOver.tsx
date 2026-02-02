@@ -14,17 +14,17 @@ export function GameOver({ won, guesses, instanceId, onPlayAgain, onClose }: Gam
   const [word, setWord] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!won) {
-      fetch(`/api/reveal/${instanceId}`)
-        .then((res) => res.json())
-        .then((data) => setWord(data.word))
-        .catch(() => {
-          fetch(`/reveal/${instanceId}`)
-            .then((res) => res.json())
-            .then((data) => setWord(data.word));
-        });
-    }
-  }, [won, instanceId]);
+    // Always fetch the word
+    fetch(`/api/reveal/${instanceId}`)
+      .then((res) => res.json())
+      .then((data) => setWord(data.word))
+      .catch(() => {
+        // Fallback in case of API issue or local dev setup
+        fetch(`/reveal/${instanceId}`)
+          .then((res) => res.json())
+          .then((data) => setWord(data.word));
+      });
+  }, [instanceId]);
 
   return (
     <div className="modal-backdrop">
@@ -38,10 +38,10 @@ export function GameOver({ won, guesses, instanceId, onPlayAgain, onClose }: Gam
         ) : (
           <>
             <h2 className="game-over-title lose">Ai pierdut!</h2>
-            <p>Cuvântul era:</p>
-            <p className="revealed-word">{word?.toUpperCase() || '...'}</p>
           </>
         )}
+        <p>Cuvântul a fost:</p>
+        <p className="revealed-word">{word?.toUpperCase() || '...'}</p>
         <div className="modal-buttons">
           <button onClick={onPlayAgain}>Joacă din nou</button>
           <Link to="/leaderboard" className="button">Clasament</Link>

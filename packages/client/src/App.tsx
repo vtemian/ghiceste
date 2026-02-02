@@ -1,11 +1,22 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { useGame } from './hooks/useGame';
 import { Grid } from './components/Grid';
 import { Keyboard } from './components/Keyboard';
 import { GameOver } from './components/GameOver';
 import { LeaderboardPage } from './pages/LeaderboardPage';
+import { LeaderboardPreview } from './components/LeaderboardPreview';
+import { HardModeToggle } from './components/HardModeToggle';
+import { HardModeInfoModal } from './components/HardModeInfoModal';
+import { AchievementsPage } from './pages/AchievementsPage';
+import { HelpTooltip } from './components/HelpTooltip';
+
 import './styles/index.css';
+import './components/LeaderboardPreview.css';
+import './components/HardModeToggle.css';
+import './components/HardModeInfoModal.css';
+import './pages/AchievementsPage.css';
+import './components/HelpTooltip.css';
 
 interface DiscordUser {
   instanceId: string;
@@ -67,23 +78,38 @@ export default function App() {
     <Routes>
       <Route path="/" element={<GamePage user={user} />} />
       <Route path="/leaderboard" element={<LeaderboardPage />} />
+      <Route path="/achievements" element={<AchievementsPage />} />
     </Routes>
   );
 }
 
-import { LeaderboardPreview } from './components/LeaderboardPreview';
-import './components/LeaderboardPreview.css';
-
 function GamePage({ user }: { user: DiscordUser }) {
-  const { state, addLetter, removeLetter, submitGuess, keyboardState, resetGame } = useGame(user.instanceId);
+  const { state, addLetter, removeLetter, submitGuess, getHint, keyboardState, resetGame, toggleHardMode } = useGame(user.instanceId);
   const [submitted, setSubmitted] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [showGameOver, setShowGameOver] = useState(false);
+  const [showHardModeInfo, setShowHardModeInfo] = useState(false);
 
+  const handleToggleHardMode = () => {
+    if (!state.hardMode && state.guesses.length === 0) {
+      setShowHardModeInfo(true);
+    }
+    toggleHardMode();
+  };
+  
   const showToast = (message: string) => {
     setToast(message);
     setTimeout(() => setToast(null), 2000);
   };
+
+  const handleGetHint = async () => {
+    const result = await getHint();
+    if (result?.error) {
+      showToast(result.error);
+    }
+  };
+
+  const hintHelpText = "Butonul de 'Indiciu' va dezvălui o literă corectă pe care nu ai descoperit-o deja. Poți folosi un singur indiciu pentru fiecare rând, începând cu a treia încercare. Fiecare indiciu folosit va adăuga o penalizare la scorul final.";
 
   const handleKey = useCallback((key: string) => {
     if (state.gameOver) return;
@@ -109,8 +135,20 @@ function GamePage({ user }: { user: DiscordUser }) {
                 username: user.username,
                 guesses: result.guesses,
                 timeMs: result.timeMs,
+                hintsUsed: state.hintsUsed,
               }),
+            })
+            .then(res => res.json())
+            .then(data => {
+              if (data.newlyUnlocked && data.newlyUnlocked.length > 0) {
+                data.newlyUnlocked.forEach((ach: any, index: number) => {
+                  setTimeout(() => {
+                    showToast(`🏆 Realizare Deblocată: ${ach.name}`);
+                  }, (index + 1) * 1500); // Stagger notifications
+                });
+              }
             });
+            
             setSubmitted(true);
           }
         }
@@ -125,6 +163,7 @@ function GamePage({ user }: { user: DiscordUser }) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Enter') {
+        e.preventDefault();
         handleKey('enter');
       } else if (e.key === 'Backspace') {
         handleKey('backspace');
@@ -144,27 +183,50 @@ function GamePage({ user }: { user: DiscordUser }) {
   };
 
   return (
-    <div className="game-layout">
-      <div className="game-container">
-        <header className="header">GHICEȘTE</header>
-        {toast && <div className="toast">{toast}</div>}
-        <Grid
-          guesses={state.guesses}
-          results={state.results}
-          currentGuess={state.currentGuess}
-        />
-        <Keyboard onKey={handleKey} letterStates={keyboardState()} />
-        {showGameOver && (
-          <GameOver
-            won={state.won}
-            guesses={state.guesses.length}
-            instanceId={user.instanceId}
-            onPlayAgain={handlePlayAgain}
-            onClose={() => setShowGameOver(false)}
+    <>
+      <HardModeToggle
+        isHardMode={state.hardMode}
+        onToggle={handleToggleHardMode}
+        disabled={state.guesses.length > 0}
+      />
+      {showHardModeInfo && <HardModeInfoModal onClose={() => setShowHardModeInfo(false)} />}
+      <div className="game-layout">
+        <div className="game-container">
+          <header className="header">
+            GHICEȘTE
+          </header>
+          <div className="game-controls">
+            <button 
+              className="hint-button" 
+              onClick={handleGetHint}
+              disabled={state.guesses.length < 3 || state.gameOver || state.hintUsedForCurrentTry || state.hardMode}
+            >
+              Indiciu ({state.hintsUsed})
+            </button>
+            <HelpTooltip text={hintHelpText} />
+          </div>
+          {toast && <div className="toast">{toast}</div>}
+          <Grid
+            guesses={state.guesses}
+            results={state.results}
+            currentGuess={state.currentGuess}
+            hardMode={state.hardMode}
+            lockedLetters={state.lockedLetters}
+            gameOver={state.gameOver}
           />
-        )}
+          <Keyboard onKey={handleKey} letterStates={keyboardState()} />
+          {showGameOver && (
+            <GameOver
+              won={state.won}
+              guesses={state.guesses.length}
+              instanceId={user.instanceId}
+              onPlayAgain={handlePlayAgain}
+              onClose={() => setShowGameOver(false)}
+            />
+          )}
+        </div>
+        <LeaderboardPreview instanceId={user.instanceId} currentUserId={user.userId} />
       </div>
-      <LeaderboardPreview instanceId={user.instanceId} currentUserId={user.userId} />
-    </div>
+    </>
   );
 }

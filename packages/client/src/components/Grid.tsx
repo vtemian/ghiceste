@@ -1,29 +1,68 @@
-import type { LetterState } from '../hooks/useGame';
+import { LetterState } from '../hooks/useGame';
+
+const ROWS = 6;
+const COLS = 5;
 
 interface GridProps {
   guesses: string[];
   results: LetterState[][];
   currentGuess: string;
+  hardMode: boolean;
+  lockedLetters: (string | null)[];
+  gameOver: boolean;
 }
 
-export function Grid({ guesses, results, currentGuess }: GridProps) {
-  const rows = [];
+export function Grid({ guesses, results, currentGuess, hardMode, lockedLetters, gameOver }: GridProps) {
+  const currentGuessRow = guesses.length;
 
-  for (let i = 0; i < guesses.length; i++) {
-    rows.push(<Row key={i} word={guesses[i]} result={results[i]} />);
-  }
+  const getDisplayGuess = () => {
+    let display = '';
+    let guessInputIndex = 0;
+    for (let i = 0; i < COLS; i++) {
+      if (lockedLetters[i]) {
+        display += lockedLetters[i];
+      } else {
+        display += currentGuess[guessInputIndex] || ' ';
+        guessInputIndex++;
+      }
+    }
+    return display.padEnd(COLS, ' ');
+  };
 
-  if (guesses.length < 6) {
-    rows.push(
-      <Row key={guesses.length} word={currentGuess.padEnd(5, ' ')} result={null} />
-    );
-  }
+  const displayGuess = getDisplayGuess();
 
-  for (let i = guesses.length + 1; i < 6; i++) {
-    rows.push(<Row key={i} word="     " result={null} />);
-  }
+  return (
+    <div className="grid">
+      {Array.from({ length: ROWS }).map((_, rowIndex) => (
+        <div key={rowIndex} className="row">
+          {Array.from({ length: COLS }).map((_, colIndex) => {
+            const isCurrentRow = !gameOver && rowIndex === currentGuessRow;
+            const letter = isCurrentRow
+              ? displayGuess[colIndex]
+              : guesses[rowIndex]?.[colIndex] || '';
+            
+            let state = isCurrentRow ? '' : results[rowIndex]?.[colIndex] || '';
+            let isFilled = isCurrentRow && displayGuess[colIndex] !== ' ';
 
-  return <div className="grid">{rows}</div>;
+            // If it's the current row and the letter is locked (either by hard mode or a hint), style it as correct
+            if (isCurrentRow && lockedLetters[colIndex]) {
+              state = 'correct';
+              isFilled = true; // Ensure it gets the filled border style
+            }
+
+            return (
+              <div
+                key={colIndex}
+                className={`cell cell-${state} ${isFilled ? 'cell-filled' : ''}`}
+              >
+                {letter}
+              </div>
+            );
+          })}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 interface RowProps {

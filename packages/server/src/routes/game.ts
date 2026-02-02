@@ -49,6 +49,42 @@ game.post('/validate', async (c) => {
   });
 });
 
+game.post('/hint', async (c) => {
+  const { instanceId, results } = await c.req.json<{
+    instanceId: string;
+    results: Array<Array<'correct' | 'present' | 'absent'>>;
+  }>();
+
+  const index = Math.floor(seededRandom(instanceId) * words.answers.length);
+  const targetWord = words.answers[index];
+
+  // Find all indices of letters that are NOT yet correct
+  const knownCorrectIndices = new Set<number>();
+  results.forEach(row => {
+    row.forEach((status, i) => {
+      if (status === 'correct') {
+        knownCorrectIndices.add(i);
+      }
+    });
+  });
+
+  const availableHintIndices = [0, 1, 2, 3, 4].filter(i => !knownCorrectIndices.has(i));
+
+  if (availableHintIndices.length === 0) {
+    // No hints available (word is fully guessed, or something went wrong)
+    return c.json({ error: 'No hints available' }, 400);
+  }
+
+  // Pick a random available index to reveal
+  const hintIndex = availableHintIndices[Math.floor(Math.random() * availableHintIndices.length)];
+  const hintLetter = targetWord[hintIndex];
+
+  return c.json({
+    letter: hintLetter,
+    position: hintIndex,
+  });
+});
+
 function calculateResult(
   guess: string,
   target: string

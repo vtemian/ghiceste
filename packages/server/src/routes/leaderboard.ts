@@ -4,56 +4,52 @@ import type { Env, LeaderboardEntry } from '../types';
 const leaderboard = new Hono<{ Bindings: Env }>();
 
 leaderboard.post('/submit', async (c) => {
-  const { instanceId, userId, username, guesses, timeMs } = await c.req.json<{
-    instanceId: string;
-    userId: string;
-    username: string;
-    guesses: number;
-    timeMs: number;
-  }>();
+  const { instanceId, userId, username, guesses, timeMs, hintsUsed } = await c.req.json<
+    LeaderboardEntry & { instanceId: string }
+  >();
+
+  if (!userId || !username || guesses === undefined || timeMs === undefined) {
+    return c.json({ error: 'Missing required fields' }, 400);
+  }
 
   const key = `session:${instanceId}`;
   const existing = await c.env.LEADERBOARDS.get(key, 'json') as LeaderboardEntry[] | null;
   const entries = existing ?? [];
   
-  const existingIndex = entries.findIndex((e) => e.userId === userId);
-  const newEntry = {
+  const newEntry: LeaderboardEntry = {
     userId,
     username,
     guesses,
     timeMs,
     timestamp: Date.now(),
+    hintsUsed: hintsUsed || 0,
   };
   
+  const existingIndex = entries.findIndex((e) => e.userId === userId);
+  
   if (existingIndex !== -1) {
-    // User already exists - update only if better score
     const existingEntry = entries[existingIndex];
-    const existingBetter = 
-      existingEntry.guesses < guesses ||
-      (existingEntry.guesses === guesses && existingEntry.timeMs < timeMs);
+    const existingScore = (existingEntry.guesses || 6) + (existingEntry.hintsUsed || 0);
+    const newScore = newEntry.guesses + newEntry.hintsUsed;
     
-    if (!existingBetter) {
-      // Update with better score
+    // Update only if new score is better (lower is better)
+    if (newScore < existingScore || (newScore === existingScore && newEntry.timeMs < existingEntry.timeMs)) {
       entries[existingIndex] = newEntry;
     }
   } else {
-    // New entry - add to leaderboard
     entries.push(newEntry);
   }
 
   entries.sort((a, b) => {
-    if (a.guesses !== b.guesses) return a.guesses - b.guesses;
+    const scoreA = (a.guesses || 6) + (a.hintsUsed || 0);
+    const scoreB = (b.guesses || 6) + (b.hintsUsed || 0);
+    if (scoreA !== scoreB) return scoreA - scoreB;
     return a.timeMs - b.timeMs;
   });
 
-  const trimmed = entries.slice(0, 50);
+  await c.env.LEADERBOARDS.put(key, JSON.stringify(entries.slice(0, 100)));
 
-  await c.env.LEADERBOARDS.put(key, JSON.stringify(trimmed), {
-    expirationTtl: 86400,
-  });
-
-  const rank = trimmed.findIndex((e) => e.userId === userId) + 1;
-  return c.json({ rank, total: trimmed.length });
+  return c.json({ success: true });
 });
 
 leaderboard.get('/:instanceId', async (c) => {

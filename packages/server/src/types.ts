@@ -2,6 +2,7 @@ export interface Env {
   DISCORD_CLIENT_SECRET: string;
   VITE_DISCORD_CLIENT_ID: string;
   LEADERBOARDS: KVNamespace;
+  ACHIEVEMENTS: KVNamespace;
   ENVIRONMENT: string;
 }
 
@@ -11,4 +12,5 @@ export interface LeaderboardEntry {
   guesses: number;
   timeMs: number;
   timestamp: number;
+  hintsUsed: number;
 }

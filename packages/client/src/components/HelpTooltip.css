@@ -1,0 +1,53 @@
+.tooltip-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
+}
+
+.tooltip-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--color-absent);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: bold;
+  user-select: none;
+  margin-left: 8px; /* Space from the hint button */
+}
+
+.tooltip-box {
+  position: absolute;
+  top: 150%; /* Position below the icon */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #2d2d2d;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  z-index: 100;
+  width: 250px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  text-align: left;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  pointer-events: none; /* So it doesn't interfere with other mouse events */
+}
+
+/* Arrow pointing up */
+.tooltip-box::after {
+  content: '';
+  position: absolute;
+  bottom: 100%; /* Position arrow at the top of the box */
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent transparent #2d2d2d transparent;
+}

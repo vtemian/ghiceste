@@ -4,6 +4,7 @@ import type { Env } from './types';
 import token from './routes/token';
 import game from './routes/game';
 import leaderboard from './routes/leaderboard';
+import achievements from './routes/achievements';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -13,11 +14,13 @@ app.use('/*', cors());
 app.route('/api', token);
 app.route('/api', game);
 app.route('/api/leaderboard', leaderboard);
+app.route('/api/achievements', achievements);
 
 // Routes without /api prefix (Discord strips the prefix when proxying)
 app.route('/', token);
 app.route('/', game);
 app.route('/leaderboard', leaderboard);
+app.route('/achievements', achievements);
 
 app.get('/health', (c) => c.json({ status: 'ok' }));
 
