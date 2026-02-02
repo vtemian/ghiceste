@@ -26,6 +26,8 @@ jobs:
 
       - name: Build client
         run: pnpm --filter @ghiceste/client build
+        env:
+          VITE_DISCORD_CLIENT_ID: ${{ secrets.VITE_DISCORD_CLIENT_ID }}
 
       - name: Deploy Worker (server)
         run: pnpm exec wrangler deploy
