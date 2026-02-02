@@ -28,14 +28,13 @@ jobs:
         run: pnpm --filter @ghiceste/client build
 
       - name: Deploy Worker (server)
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          workingDirectory: packages/server
+        run: pnpm exec wrangler deploy
+        working-directory: packages/server
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
       - name: Deploy Pages (client)
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          command: pages deploy dist --project-name=ghiceste
-          workingDirectory: packages/client
+        run: pnpm exec wrangler pages deploy dist --project-name=ghiceste
+        working-directory: packages/client
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
