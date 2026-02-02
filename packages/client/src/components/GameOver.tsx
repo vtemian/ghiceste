@@ -7,10 +7,9 @@ interface GameOverProps {
   guesses: number;
   instanceId: string;
   onPlayAgain: () => void;
-  onClose: () => void;
 }
 
-export function GameOver({ won, guesses, instanceId, onPlayAgain, onClose }: GameOverProps) {
+export function GameOver({ won, guesses, instanceId, onPlayAgain }: GameOverProps) {
   const [word, setWord] = useState<string | null>(null);
 
   useEffect(() => {
@@ -29,7 +28,6 @@ export function GameOver({ won, guesses, instanceId, onPlayAgain, onClose }: Gam
   return (
     <div className="modal-backdrop">
       <div className="modal-content">
-        <button className="close-button" onClick={onClose}>&times;</button>
         {won ? (
           <>
             <h2 className="game-over-title win">Felicitări!</h2>

@@ -1,7 +1,17 @@
 import { Hono } from 'hono';
 import words from '../../../../data/words.json';
+import type { Env } from '../types';
 
-const game = new Hono();
+interface GameSession {
+  results: Array<Array<'correct' | 'present' | 'absent'>>;
+  hintsUsed: number;
+}
+
+const game = new Hono<{ Bindings: Env }>();
+
+function getSessionKey(instanceId: string, userId: string): string {
+  return `game:${instanceId}:${userId}`;
+}
 
 function seededRandom(seed: string): number {
   let hash = 0;
@@ -27,9 +37,10 @@ game.get('/reveal/:instanceId', (c) => {
 });
 
 game.post('/validate', async (c) => {
-  const { guess, instanceId } = await c.req.json<{
+  const { guess, instanceId, userId } = await c.req.json<{
     guess: string;
     instanceId: string;
+    userId?: string;
   }>();
 
   const normalizedGuess = guess.toLowerCase().trim();
@@ -42,6 +53,15 @@ game.post('/validate', async (c) => {
   const targetWord = words.answers[index];
   const result = calculateResult(normalizedGuess, targetWord);
 
+  // Store result in KV if userId is provided
+  if (userId) {
+    const sessionKey = getSessionKey(instanceId, userId);
+    const existing = await c.env.LEADERBOARDS.get(sessionKey, 'json') as GameSession | null;
+    const session: GameSession = existing ?? { results: [], hintsUsed: 0 };
+    session.results.push(result);
+    await c.env.LEADERBOARDS.put(sessionKey, JSON.stringify(session), { expirationTtl: 86400 }); // 24h TTL
+  }
+
   return c.json({
     valid: true,
     result,
@@ -50,13 +70,31 @@ game.post('/validate', async (c) => {
 });
 
 game.post('/hint', async (c) => {
-  const { instanceId, results } = await c.req.json<{
+  const { instanceId, userId, results: clientResults } = await c.req.json<{
     instanceId: string;
-    results: Array<Array<'correct' | 'present' | 'absent'>>;
+    userId?: string;
+    results?: Array<Array<'correct' | 'present' | 'absent'>>;
   }>();
 
   const index = Math.floor(seededRandom(instanceId) * words.answers.length);
   const targetWord = words.answers[index];
+
+  // Prefer server-side results if userId is provided
+  let results: Array<Array<'correct' | 'present' | 'absent'>> = [];
+  let session: GameSession | null = null;
+
+  if (userId) {
+    const sessionKey = getSessionKey(instanceId, userId);
+    session = await c.env.LEADERBOARDS.get(sessionKey, 'json') as GameSession | null;
+    if (session) {
+      results = session.results;
+    }
+  }
+
+  // Fallback to client results for backward compatibility (but log warning)
+  if (results.length === 0 && clientResults) {
+    results = clientResults;
+  }
 
   // Find all indices of letters that are NOT yet correct
   const knownCorrectIndices = new Set<number>();
@@ -71,13 +109,20 @@ game.post('/hint', async (c) => {
   const availableHintIndices = [0, 1, 2, 3, 4].filter(i => !knownCorrectIndices.has(i));
 
   if (availableHintIndices.length === 0) {
-    // No hints available (word is fully guessed, or something went wrong)
     return c.json({ error: 'No hints available' }, 400);
   }
 
   // Pick a random available index to reveal
   const hintIndex = availableHintIndices[Math.floor(Math.random() * availableHintIndices.length)];
   const hintLetter = targetWord[hintIndex];
+
+  // Increment hints used in KV
+  if (userId) {
+    const sessionKey = getSessionKey(instanceId, userId);
+    const currentSession: GameSession = session ?? { results: [], hintsUsed: 0 };
+    currentSession.hintsUsed += 1;
+    await c.env.LEADERBOARDS.put(sessionKey, JSON.stringify(currentSession), { expirationTtl: 86400 });
+  }
 
   return c.json({
     letter: hintLetter,

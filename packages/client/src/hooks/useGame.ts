@@ -16,7 +16,7 @@ export interface GameState {
   hintUsedForCurrentTry: boolean;
 }
 
-export function useGame(instanceId: string) {
+export function useGame(instanceId: string, userId?: string) {
   const [state, setState] = useState<GameState>({
     guesses: [],
     results: [],
@@ -85,7 +85,7 @@ export function useGame(instanceId: string) {
     const response = await fetch('/api/validate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ guess: fullGuess, instanceId }),
+      body: JSON.stringify({ guess: fullGuess, instanceId, userId }),
     });
 
     const data = await response.json();
@@ -135,7 +135,8 @@ export function useGame(instanceId: string) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         instanceId,
-        results: state.results,
+        userId,
+        results: state.results, // Fallback for backward compatibility
       }),
     });
 

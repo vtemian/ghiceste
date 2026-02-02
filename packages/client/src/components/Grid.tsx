@@ -12,7 +12,7 @@ interface GridProps {
   gameOver: boolean;
 }
 
-export function Grid({ guesses, results, currentGuess, hardMode, lockedLetters, gameOver }: GridProps) {
+export function Grid({ guesses, results, currentGuess, hardMode: _hardMode, lockedLetters, gameOver }: GridProps) {
   const currentGuessRow = guesses.length;
 
   const getDisplayGuess = () => {
@@ -65,28 +65,3 @@ export function Grid({ guesses, results, currentGuess, hardMode, lockedLetters, 
   );
 }
 
-interface RowProps {
-  word: string;
-  result: LetterState[] | null;
-}
-
-function Row({ word, result }: RowProps) {
-  return (
-    <div className="row">
-      {word.split('').map((letter, i) => (
-        <Cell key={i} letter={letter} state={result?.[i] ?? 'empty'} />
-      ))}
-    </div>
-  );
-}
-
-interface CellProps {
-  letter: string;
-  state: LetterState;
-}
-
-function Cell({ letter, state }: CellProps) {
-  const hasLetter = letter.trim() !== '';
-  const classes = `cell cell-${state}${hasLetter && state === 'empty' ? ' cell-filled' : ''}`;
-  return <div className={classes}>{letter.trim()}</div>;
-}

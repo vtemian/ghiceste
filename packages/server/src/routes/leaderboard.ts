@@ -3,8 +3,13 @@ import type { Env, LeaderboardEntry } from '../types';
 
 const leaderboard = new Hono<{ Bindings: Env }>();
 
+interface GameSession {
+  results: Array<Array<'correct' | 'present' | 'absent'>>;
+  hintsUsed: number;
+}
+
 leaderboard.post('/submit', async (c) => {
-  const { instanceId, userId, username, guesses, timeMs, hintsUsed } = await c.req.json<
+  const { instanceId, userId, username, guesses, timeMs, hintsUsed: clientHintsUsed } = await c.req.json<
     LeaderboardEntry & { instanceId: string }
   >();
 
@@ -12,17 +17,22 @@ leaderboard.post('/submit', async (c) => {
     return c.json({ error: 'Missing required fields' }, 400);
   }
 
+  // Get server-side hints count (trusted source)
+  const gameSessionKey = `game:${instanceId}:${userId}`;
+  const gameSession = await c.env.LEADERBOARDS.get(gameSessionKey, 'json') as GameSession | null;
+  const hintsUsed = gameSession?.hintsUsed ?? clientHintsUsed ?? 0;
+
   const key = `session:${instanceId}`;
   const existing = await c.env.LEADERBOARDS.get(key, 'json') as LeaderboardEntry[] | null;
   const entries = existing ?? [];
-  
+
   const newEntry: LeaderboardEntry = {
     userId,
     username,
     guesses,
     timeMs,
     timestamp: Date.now(),
-    hintsUsed: hintsUsed || 0,
+    hintsUsed,
   };
   
   const existingIndex = entries.findIndex((e) => e.userId === userId);

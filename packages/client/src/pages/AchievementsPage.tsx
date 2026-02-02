@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import './AchievementsPage.css';
 
-// Mirroring the backend definitions for simplicity
 const ALL_ACHIEVEMENTS = {
   FIRST_WIN: { id: 'FIRST_WIN', name: 'Prima Victorie', description: 'Câștigă primul tău joc.' },
   STREAK_3: { id: 'STREAK_3', name: 'În Serie', description: 'Câștigă 3 jocuri la rând.' },
@@ -18,22 +17,34 @@ interface Achievement {
   description: string;
 }
 
-// ... (imports and definitions)
 interface UserAchievements {
   unlocked: Achievement[];
   winStreak: number;
-  dayStreak: number; // Added
+  dayStreak: number;
   totalWins: number;
 }
 
 export const AchievementsPage: React.FC = () => {
   const [achievements, setAchievements] = useState<UserAchievements | null>(null);
-// ... (useEffects)
-// ...
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/achievements')
+      .then(res => res.json())
+      .then(data => {
+        setAchievements(data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const unlockedIds = new Set(achievements?.unlocked?.map(a => a.id) ?? []);
+
   return (
     <div className="achievements-page">
       <header className="header">
-// ...
+        <Link to="/" className="back-link">← Înapoi</Link>
+        <h1>Realizări</h1>
       </header>
       <main>
         {loading ? (

@@ -84,7 +84,7 @@ export default function App() {
 }
 
 function GamePage({ user }: { user: DiscordUser }) {
-  const { state, addLetter, removeLetter, submitGuess, getHint, keyboardState, resetGame, toggleHardMode } = useGame(user.instanceId);
+  const { state, addLetter, removeLetter, submitGuess, getHint, keyboardState, resetGame, toggleHardMode } = useGame(user.instanceId, user.userId);
   const [submitted, setSubmitted] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [showGameOver, setShowGameOver] = useState(false);
@@ -221,7 +221,6 @@ function GamePage({ user }: { user: DiscordUser }) {
               guesses={state.guesses.length}
               instanceId={user.instanceId}
               onPlayAgain={handlePlayAgain}
-              onClose={() => setShowGameOver(false)}
             />
           )}
         </div>
